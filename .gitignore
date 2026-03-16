@@ -46,6 +46,7 @@ test-ledger/
 
 # Misc
 .DS_Store
+/.local_notes/
 .vscode/
 .idea/
 .yarn/
