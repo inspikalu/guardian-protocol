@@ -1,0 +1,31 @@
+[package]
+name = "orchestrator"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "orchestrator"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "rbac/idl-build", "circuit_breaker/idl-build", "lock_manager/idl-build"]
+anchor-debug = []
+custom-heap = []
+custom-panic = []
+
+
+[dependencies]
+anchor-lang = "0.32.1"
+rbac = { path = "../rbac", features = ["cpi"] }
+circuit_breaker = { path = "../circuit_breaker", features = ["cpi"] }
+lock_manager = { path = "../lock_manager", features = ["cpi"] }
+
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }

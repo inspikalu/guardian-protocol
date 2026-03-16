@@ -1,0 +1,693 @@
+export const IDL = 
+{
+  "address": "EdNSQ2mmw6LZ1ySE2okzzBerfL7JzQkP3od2Yav8mKfS",
+  "metadata": {
+    "name": "rbac",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "check_permission",
+      "docs": [
+        "Check that the signer has a specific permission. Errors if not."
+      ],
+      "discriminator": [
+        154,
+        199,
+        232,
+        242,
+        96,
+        72,
+        197,
+        236
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "signer": true
+        },
+        {
+          "name": "role"
+        },
+        {
+          "name": "assignment",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  105,
+                  103,
+                  110,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "role"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "required_permission",
+          "type": {
+            "defined": {
+              "name": "Permission"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "create_role",
+      "docs": [
+        "Create a named role with a set of permissions."
+      ],
+      "discriminator": [
+        170,
+        147,
+        127,
+        223,
+        222,
+        112,
+        205,
+        163
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "role",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  111,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "name"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "permissions",
+          "type": {
+            "vec": {
+              "defined": {
+                "name": "Permission"
+              }
+            }
+          }
+        },
+        {
+          "name": "parent_role",
+          "type": {
+            "option": "pubkey"
+          }
+        },
+        {
+          "name": "expiry",
+          "type": {
+            "option": "i64"
+          }
+        }
+      ]
+    },
+    {
+      "name": "emit_audit",
+      "docs": [
+        "Emit an on-chain audit log entry."
+      ],
+      "discriminator": [
+        161,
+        52,
+        201,
+        52,
+        53,
+        36,
+        74,
+        198
+      ],
+      "accounts": [
+        {
+          "name": "actor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "audit_log",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  100,
+                  105,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "counter"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "counter",
+          "type": "u64"
+        },
+        {
+          "name": "action",
+          "type": "u8"
+        },
+        {
+          "name": "target",
+          "type": {
+            "option": "pubkey"
+          }
+        },
+        {
+          "name": "success",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "grant_role",
+      "docs": [
+        "Grant a role to a user (creates a RoleAssignment PDA)."
+      ],
+      "discriminator": [
+        218,
+        234,
+        128,
+        15,
+        82,
+        33,
+        236,
+        253
+      ],
+      "accounts": [
+        {
+          "name": "granter",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "role"
+        },
+        {
+          "name": "assignment",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  115,
+                  115,
+                  105,
+                  103,
+                  110,
+                  109,
+                  101,
+                  110,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "user"
+              },
+              {
+                "kind": "account",
+                "path": "role"
+              }
+            ]
+          }
+        },
+        {
+          "name": "granter_assignment",
+          "docs": [
+            "Optional: The granter's own assignment, used to verify delegation rights.",
+            "Must be passed when the granter is NOT the authority admin."
+          ],
+          "optional": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "user",
+          "type": "pubkey"
+        },
+        {
+          "name": "expiry",
+          "type": {
+            "option": "i64"
+          }
+        },
+        {
+          "name": "can_delegate",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "initialize_authority",
+      "docs": [
+        "Initialize the root Authority PDA. Must be called before any other instruction."
+      ],
+      "discriminator": [
+        13,
+        186,
+        25,
+        16,
+        218,
+        31,
+        90,
+        1
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "revoke_role",
+      "docs": [
+        "Revoke a role assignment (closes the RoleAssignment account)."
+      ],
+      "discriminator": [
+        179,
+        232,
+        2,
+        180,
+        48,
+        227,
+        82,
+        7
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  117,
+                  116,
+                  104,
+                  111,
+                  114,
+                  105,
+                  116,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "assignment",
+          "writable": true
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "AuditLog",
+      "discriminator": [
+        230,
+        207,
+        176,
+        233,
+        170,
+        130,
+        101,
+        244
+      ]
+    },
+    {
+      "name": "Authority",
+      "discriminator": [
+        36,
+        108,
+        254,
+        18,
+        167,
+        144,
+        27,
+        36
+      ]
+    },
+    {
+      "name": "Role",
+      "discriminator": [
+        46,
+        219,
+        197,
+        24,
+        233,
+        249,
+        253,
+        154
+      ]
+    },
+    {
+      "name": "RoleAssignment",
+      "discriminator": [
+        205,
+        130,
+        191,
+        231,
+        211,
+        225,
+        155,
+        246
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "RoleExpired",
+      "msg": "The role has expired"
+    },
+    {
+      "code": 6001,
+      "name": "AssignmentExpired",
+      "msg": "The role assignment has expired"
+    },
+    {
+      "code": 6002,
+      "name": "PermissionDenied",
+      "msg": "The signer does not have the required permission"
+    },
+    {
+      "code": 6003,
+      "name": "DelegationDepthExceeded",
+      "msg": "Delegation depth limit exceeded"
+    },
+    {
+      "code": 6004,
+      "name": "Unauthorized",
+      "msg": "Only the authority admin can perform this action"
+    },
+    {
+      "code": 6005,
+      "name": "NameTooLong",
+      "msg": "The role name is too long (max 32 chars)"
+    },
+    {
+      "code": 6006,
+      "name": "OutsidePolicyWindow",
+      "msg": "The time policy window is not currently active"
+    }
+  ],
+  "types": [
+    {
+      "name": "AuditLog",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "action",
+            "type": "u8"
+          },
+          {
+            "name": "actor",
+            "type": "pubkey"
+          },
+          {
+            "name": "target",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "success",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Authority",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Permission",
+      "docs": [
+        "Permissions that can be assigned to a role."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "TreasuryWithdraw",
+            "fields": [
+              {
+                "name": "max_amount",
+                "type": "u64"
+              }
+            ]
+          },
+          {
+            "name": "TreasuryDeposit"
+          },
+          {
+            "name": "RoleManagement"
+          },
+          {
+            "name": "EmergencyStop"
+          },
+          {
+            "name": "ViewAudit"
+          },
+          {
+            "name": "AcquireLock"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Role",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "permissions",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Permission"
+                }
+              }
+            }
+          },
+          {
+            "name": "parent_role",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "created_by",
+            "type": "pubkey"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "expires_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RoleAssignment",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "role",
+            "type": "pubkey"
+          },
+          {
+            "name": "granted_by",
+            "type": "pubkey"
+          },
+          {
+            "name": "granted_at",
+            "type": "i64"
+          },
+          {
+            "name": "expires_at",
+            "type": {
+              "option": "i64"
+            }
+          },
+          {
+            "name": "can_delegate",
+            "type": "bool"
+          },
+          {
+            "name": "delegation_depth",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+};

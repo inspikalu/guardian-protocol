@@ -1,0 +1,25 @@
+[toolchain]
+package_manager = "npm"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.devnet]
+circuit_breaker = "9GXUR2xcVDxnu1JNEdDqCrLRL9K44t5iYxcTWekMaPma"
+lock_manager = "reMMumQqHvHcQWJnyURAASgsp3zomq6cLdW3dUyyZ7j"
+orchestrator = "X61sTdLaXMaAjdDE9UFSs36FoabSQMiXGS2uABzeJjB"
+rbac = "EdNSQ2mmw6LZ1ySE2okzzBerfL7JzQkP3od2Yav8mKfS"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "devnet"
+wallet = "/home/inspiuser/.config/solana/id.json"
+
+[scripts]
+test = "npm run test:mocha"
+
+[test]
+startup_wait = 15000

@@ -1,0 +1,393 @@
+export const IDL = 
+{
+  "address": "9GXUR2xcVDxnu1JNEdDqCrLRL9K44t5iYxcTWekMaPma",
+  "metadata": {
+    "name": "circuit_breaker",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "check_state",
+      "docs": [
+        "Check if the circuit allows calls — errors if Open, auto-transitions to HalfOpen after timeout."
+      ],
+      "discriminator": [
+        84,
+        106,
+        165,
+        229,
+        16,
+        88,
+        102,
+        7
+      ],
+      "accounts": [
+        {
+          "name": "circuit",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_circuit",
+      "docs": [
+        "Create a new circuit breaker for a named resource."
+      ],
+      "discriminator": [
+        35,
+        7,
+        152,
+        132,
+        75,
+        65,
+        176,
+        162
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "circuit",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  105,
+                  114,
+                  99,
+                  117,
+                  105,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "name"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "label",
+          "type": "string"
+        },
+        {
+          "name": "failure_threshold",
+          "type": "u32"
+        },
+        {
+          "name": "success_threshold",
+          "type": "u32"
+        },
+        {
+          "name": "timeout_seconds",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "force_open",
+      "docs": [
+        "Emergency override: force-open the circuit (authority only)."
+      ],
+      "discriminator": [
+        47,
+        240,
+        210,
+        225,
+        87,
+        253,
+        41,
+        248
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "circuit",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "record_failure",
+      "docs": [
+        "Record a failed call — increments failure counter, opens circuit on threshold."
+      ],
+      "discriminator": [
+        86,
+        94,
+        231,
+        2,
+        95,
+        43,
+        53,
+        161
+      ],
+      "accounts": [
+        {
+          "name": "circuit",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "record_success",
+      "docs": [
+        "Record a successful call — resets failure counter, closes HalfOpen circuits."
+      ],
+      "discriminator": [
+        219,
+        151,
+        164,
+        171,
+        151,
+        214,
+        213,
+        22,
+        115
+      ],
+      "accounts": [
+        {
+          "name": "circuit",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "reset_circuit",
+      "docs": [
+        "Reset all counters and return circuit to Closed (authority only)."
+      ],
+      "discriminator": [
+        170,
+        14,
+        129,
+        203,
+        134,
+        176,
+        249,
+        127
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "circuit",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_circuit_label",
+      "docs": [
+        "Update the label of an existing circuit."
+      ],
+      "discriminator": [
+        174,
+        109,
+        67,
+        165,
+        171,
+        253,
+        21,
+        25
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "circuit",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "new_label",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Circuit",
+      "discriminator": [
+        113,
+        209,
+        5,
+        225,
+        233,
+        216,
+        248,
+        61
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "CircuitOpen",
+      "msg": "Circuit is OPEN — service temporarily unavailable"
+    },
+    {
+      "code": 6001,
+      "name": "Unauthorized",
+      "msg": "Only the circuit authority can perform this action"
+    },
+    {
+      "code": 6002,
+      "name": "NameTooLong",
+      "msg": "Circuit name is too long (max 32 chars)"
+    },
+    {
+      "code": 6003,
+      "name": "AlreadyInState",
+      "msg": "The circuit is already in the requested state"
+    }
+  ],
+  "types": [
+    {
+      "name": "Circuit",
+      "docs": [
+        "The on-chain circuit breaker account."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "docs": [
+              "Unique name of the resource being protected (e.g., \"oracle_program\")"
+            ],
+            "type": "string"
+          },
+          {
+            "name": "label",
+            "docs": [
+              "Human-readable label for the circuit."
+            ],
+            "type": "string"
+          },
+          {
+            "name": "state",
+            "type": {
+              "defined": {
+                "name": "CircuitState"
+              }
+            }
+          },
+          {
+            "name": "authority",
+            "docs": [
+              "The authority who can force-open or reset the circuit."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "failure_threshold",
+            "docs": [
+              "Number of consecutive failures before opening."
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "success_threshold",
+            "docs": [
+              "Number of consecutive successes in HalfOpen before closing."
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "timeout_seconds",
+            "docs": [
+              "Seconds to wait in Open state before transitioning to HalfOpen."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "total_calls",
+            "type": "u64"
+          },
+          {
+            "name": "consecutive_failures",
+            "type": "u32"
+          },
+          {
+            "name": "consecutive_successes",
+            "type": "u32"
+          },
+          {
+            "name": "last_failure_time",
+            "type": "i64"
+          },
+          {
+            "name": "last_state_change",
+            "type": "i64"
+          },
+          {
+            "name": "lifetime_failures",
+            "type": "u64"
+          },
+          {
+            "name": "lifetime_successes",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CircuitState",
+      "docs": [
+        "The state machine of a circuit breaker."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Closed"
+          },
+          {
+            "name": "Open"
+          },
+          {
+            "name": "HalfOpen"
+          }
+        ]
+      }
+    }
+  ]
+};
