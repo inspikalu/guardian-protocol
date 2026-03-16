@@ -2,7 +2,7 @@
 
 **Enterprise-grade distributed systems patterns for Solana programs.**
 
-Solana Guardian Protocol provides traditional Web2 backend infrastructure patterns—role-based access control, circuit breakers, and distributed locks—reimagined as composable Solana programs. This project demonstrates how complex backend infrastructure can be rebuilt on-chain with transparency, auditability, and decentralization.
+Solana Guardian Protocol provides traditional Web2 backend infrastructure patterns: role-based access control, circuit breakers, and distributed locks reimagined as composable Solana programs. This project demonstrates how complex backend infrastructure can be rebuilt on-chain with transparency, auditability, and decentralization.
 
 ## Overview
 
