@@ -213,11 +213,13 @@ export default function RbacPage() {
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button disabled={!isAdmin} className="flex-1 sm:flex-none rounded-xl h-11 px-6 shadow-xl shadow-primary/10 transition-transform active:scale-95">
-                  <PlusCircle size={18} weight="bold" className="mr-2" />Role
-                </Button>
-              </DialogTrigger>
+              <DialogTrigger
+                render={
+                  <Button disabled={!isAdmin} className="flex-1 sm:flex-none rounded-xl h-11 px-6 shadow-xl shadow-primary/10 transition-transform active:scale-95">
+                    <PlusCircle size={18} weight="bold" className="mr-2" />Role
+                  </Button>
+                }
+              />
               <DialogContent className="sm:max-w-[425px] rounded-[2rem]">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold">Forge New Role</DialogTitle>
@@ -284,11 +286,13 @@ export default function RbacPage() {
               </DialogContent>
             </Dialog>
             <Dialog open={isAssignOpen} onOpenChange={setIsAssignOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" disabled={!isAdmin} className="flex-1 sm:flex-none rounded-xl border-2 h-11 px-6 hover:bg-secondary">
-                  <UserPlus size={18} weight="bold" className="mr-2" />Grant
-                </Button>
-              </DialogTrigger>
+              <DialogTrigger
+                render={
+                  <Button variant="outline" disabled={!isAdmin} className="flex-1 sm:flex-none rounded-xl border-2 h-11 px-6 hover:bg-secondary">
+                    <UserPlus size={18} weight="bold" className="mr-2" />Grant
+                  </Button>
+                }
+              />
               <DialogContent className="sm:max-w-[425px] rounded-[2rem]">
                 <DialogHeader>
                   <DialogTitle className="text-2xl font-bold">Grant Deployment Access</DialogTitle>
