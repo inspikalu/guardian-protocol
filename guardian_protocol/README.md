@@ -1,8 +1,8 @@
-# Guardian Protocol 🛡️
+# Guardian Protocol
 
 Guardian Protocol is a suite of Solana programs implementing classic distributed system resilience and security patterns on-chain. It focuses on three core pillars: **Role-Based Access Control (RBAC)**, **Circuit Breakers**, and **Distributed Lock Management**.
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 Guardian Protocol allows developers to wrap sensitive operations (like treasury transfers or oracle updates) in a multilayered protection sequence orchestrated by the `orchestrator` program.
 
@@ -14,7 +14,7 @@ Guardian Protocol allows developers to wrap sensitive operations (like treasury 
 
 ---
 
-## 🌐 Web2 to Solana Analysis
+## Web2 to Solana Analysis
 
 Guardian Protocol translates battle-tested backend patterns from the Web2 world into the high-concurrency, stateful environment of Solana.
 
@@ -26,7 +26,7 @@ Guardian Protocol translates battle-tested backend patterns from the Web2 world 
 
 ---
 
-## 🚀 Devnet Deployment
+## Devnet Deployment
 
 The protocol is fully deployed and verified on Solana Devnet.
 
@@ -39,7 +39,7 @@ The protocol is fully deployed and verified on Solana Devnet.
 
 ---
 
-## 🧪 Testing & Verification
+## Testing & Verification
 
 ### Automated Tests
 Run the following to verify the programs on Devnet:
@@ -55,22 +55,28 @@ The project includes a Next.js dashboard that interacts with the live programs:
 
 ---
 
-## ⚖️ Tradeoffs & Constraints
+## Tradeoffs & Constraints (Web2 vs. Solana)
 
-### 1. Account Limits
-- **Constraint**: Each RBAC role is a PDA. Creating hundreds of roles for a single user might hit transaction size limits if we load them all at once.
-- **Tradeoff**: We use a hierarchical model to reduce the number of explicit assignments needed.
+Building these backend patterns on Solana introduces unique architectural considerations compared to traditional Web2 environments:
 
-### 2. Latency vs. Security
-- **Tradeoff**: Wrapping operations in 3 different security programs (RBAC + Circuit + Lock) adds compute unit cost and latency, but provides a "Defense in Depth" that is impossible in traditional single-program architectures.
+### 1. Compute Limits & Latency
+- **Tradeoff:** Wrapping operations in multiple security programs (RBAC + Circuit + Lock) adds compute unit (CU) costs and network latency. 
+- **Constraint:** Solana transactions have a strict 1.4M CU limit.
+- **Solution:** We optimized cross-program invocations (CPIs) and use a hierarchical RBAC model to minimize the number of accounts loaded per transaction, providing "Defense in Depth" while staying within compute budgets.
 
-### 3. State Management
-- **Constraint**: Unlike Redis, Solana's "Distributed Lock" state is permanent unless explicitly closed.
-- **Solution**: We implemented a `release_lock` instruction to reclaim rent and cleanup state.
+### 2. Public State Visibility
+- **Tradeoff:** Unlike centralized databases (e.g., AWS RDS), all on-chain state—including roles, locks, and circuit statuses—is globally visible.
+- **Constraint:** We cannot store sensitive PII or private metadata directly in the RBAC roles.
+- **Solution:** The protocol stores deterministic cryptographic identifiers (like public keys) rather than readable user data, leveraging the public ledger for auditability rather than secrecy.
+
+### 3. State Management & Rent
+- **Tradeoff:** Creating distributed locks or role assignments requires allocating permanent storage (PDAs) and paying rent, unlike ephemeral Redis keys.
+- **Constraint:** Unused state permanently consumes space and SOL if not managed.
+- **Solution:** We implemented explicit `release_lock` and `revoke_role` instructions to close accounts, reclaim rent, and maintain a clean state tree.
 
 ---
 
-## 🔗 Devnet Transaction Links
+## Devnet Transaction Links
 
 | Action | Devnet Transaction Link |
 | :--- | :--- |
@@ -81,5 +87,5 @@ The project includes a Next.js dashboard that interacts with the live programs:
 
 ---
 
-## 📜 Audit Log Pattern
+## Audit Log Pattern
 Every protected operation emits an on-chain **Audit Log** PDA. This ensures that every high-stakes action is permanently recorded and searchable, providing a level of transparency that surpasses traditional logging.

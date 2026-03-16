@@ -64,7 +64,7 @@ pub fn handler(
         },
     );
     rbac::cpi::check_permission(rbac_check_ctx, required_permission)?;
-    msg!("Step 1 ✓ RBAC: Permission check passed");
+    msg!("Step 1: RBAC - Permission check passed");
 
     // ─── Step 2: Circuit Breaker — Check State ───
     let cb_check_ctx = CpiContext::new(
@@ -74,7 +74,7 @@ pub fn handler(
         },
     );
     circuit_breaker::cpi::check_state(cb_check_ctx)?;
-    msg!("Step 2 ✓ Circuit Breaker: Circuit is healthy");
+    msg!("Step 2: Circuit Breaker - Circuit is healthy");
 
     // ─── Step 3: Lock Manager — Acquire Lock ───
     let lock_acquire_ctx = CpiContext::new(
@@ -87,10 +87,10 @@ pub fn handler(
         },
     );
     lock_manager::cpi::acquire_lock(lock_acquire_ctx, lease_duration)?;
-    msg!("Step 3 ✓ Lock Manager: Lock acquired");
+    msg!("Step 3: Lock Manager - Lock acquired");
 
     // ─── Step 4: Business logic executes here ───
-    msg!("Step 4 ✓ Business Logic: Protected operation executed");
+    msg!("Step 4: Business Logic - Protected operation executed");
 
     // ─── Step 5: Circuit Breaker — Record Success ───
     let cb_success_ctx = CpiContext::new(
@@ -100,7 +100,7 @@ pub fn handler(
         },
     );
     circuit_breaker::cpi::record_success(cb_success_ctx)?;
-    msg!("Step 5 ✓ Circuit Breaker: Success recorded");
+    msg!("Step 5: Circuit Breaker - Success recorded");
 
     // ─── Step 6: Lock Manager — Release Lock ───
     let lock_release_ctx = CpiContext::new(
@@ -112,7 +112,7 @@ pub fn handler(
         },
     );
     lock_manager::cpi::release_lock(lock_release_ctx)?;
-    msg!("Step 6 ✓ Lock Manager: Lock released");
+    msg!("Step 6: Lock Manager - Lock released");
 
     // ─── Step 7: RBAC — Emit Audit Log ───
     let audit_ctx = CpiContext::new(
@@ -124,8 +124,8 @@ pub fn handler(
         },
     );
     rbac::cpi::emit_audit(audit_ctx, audit_counter, 1u8, None, true)?;
-    msg!("Step 7 ✓ RBAC: Audit log recorded");
+    msg!("Step 7: RBAC - Audit log recorded");
 
-    msg!("✅ Protected operation completed successfully");
+    msg!("Protected operation completed successfully");
     Ok(())
 }

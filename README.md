@@ -76,3 +76,22 @@ The application will be available at `http://localhost:3000`.
 - **Trustless Delegation:** The RBAC logic enables cryptographic proof of permissions at any point in time without trusting centralized permission providers.
 - **Global Coordination:** Solana's circuit breaker provides global state—all network callers observe the same circuit state, avoiding thundering herd problems on recovery.
 - **Cryptographic Ownership:** Lock acquisition is cryptographically verifiable and relies on blockchain consensus rather than network latency, external quorum mechanisms, or trust wrappers.
+
+## Tradeoffs & Constraints (Web2 vs. Solana)
+
+Building these backend patterns on Solana introduces unique architectural considerations compared to traditional Web2 environments:
+
+### 1. Compute Limits & Latency
+- **Tradeoff:** Wrapping operations in multiple security programs (RBAC + Circuit + Lock) adds compute unit (CU) costs and network latency. 
+- **Constraint:** Solana transactions have a strict 1.4M CU limit.
+- **Solution:** We optimized cross-program invocations (CPIs) and use a hierarchical RBAC model to minimize the number of accounts loaded per transaction, providing "Defense in Depth" while staying within compute budgets.
+
+### 2. Public State Visibility
+- **Tradeoff:** Unlike centralized databases (e.g., AWS RDS), all on-chain state—including roles, locks, and circuit statuses—is globally visible.
+- **Constraint:** We cannot store sensitive PII or private metadata directly in the RBAC roles.
+- **Solution:** The protocol stores deterministic cryptographic identifiers (like public keys) rather than readable user data, leveraging the public ledger for auditability rather than secrecy.
+
+### 3. State Management & Rent
+- **Tradeoff:** Creating distributed locks or role assignments requires allocating permanent storage (PDAs) and paying rent, unlike ephemeral Redis keys.
+- **Constraint:** Unused state permanently consumes space and SOL if not managed.
+- **Solution:** We implemented explicit `release_lock` and `revoke_role` instructions to close accounts, reclaim rent, and maintain a clean state tree.
