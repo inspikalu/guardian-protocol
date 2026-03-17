@@ -87,6 +87,18 @@ export default function RbacPage() {
   const [assignUserExpiry, setAssignUserExpiry] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [currentTime, setCurrentTime] = useState(Date.now() / 1000);
+
+  // Update current time periodically for expiry checks
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now() / 1000), 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const isExpired = (expiresAt: any) => {
+    if (!expiresAt) return false;
+    return expiresAt.toNumber() < currentTime;
+  };
 
   const fetchData = async () => {
     if (!rbacProgram) return;
@@ -107,7 +119,7 @@ export default function RbacPage() {
       setIsAdmin(authority.admin.toString() === provider?.publicKey?.toString());
 
       setRoles(allRoles);
-      setAssignments(allAssignments);
+      setAssignments(allAssignments.filter((as: any) => !isExpired(as.account.expiresAt)));
       setAuditLogs(allLogs.sort((a: any, b: any) => b.account.timestamp.toNumber() - a.account.timestamp.toNumber()));
     } catch (error) {
       console.error("Failed to fetch data:", error);
@@ -137,7 +149,7 @@ export default function RbacPage() {
           },
         },
       ]);
-      setMyAssignments(userAssignments);
+      setMyAssignments(userAssignments.filter((as: any) => !isExpired(as.account.expiresAt)));
     } catch (error) {
       console.error("Failed to fetch my access:", error);
     }
@@ -353,42 +365,43 @@ export default function RbacPage() {
 
       <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-3">
         {/* Formation Status Inspired Card */}
-        <Card className="bg-primary text-primary-foreground border-none shadow-2xl shadow-primary/20 overflow-hidden relative group">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Shield size={120} weight="fill" />
+        <Card className="bg-zinc-950 dark:bg-white text-zinc-100 dark:text-zinc-900 border-zinc-800 dark:border-zinc-200 shadow-2xl overflow-hidden relative group">
+          <div className="absolute top-0 right-0 p-8 opacity-[0.03] dark:opacity-[0.05] group-hover:opacity-[0.07] dark:group-hover:opacity-[0.1] transition-opacity pointer-events-none">
+            <Shield size={160} weight="fill" />
           </div>
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent opacity-50" />
           <CardHeader className="relative z-10">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-[10px] uppercase font-bold tracking-widest text-primary-foreground/60 mb-1">Identity Passport</p>
+                <p className="text-[10px] uppercase font-black tracking-[0.3em] text-zinc-500 dark:text-zinc-400 mb-1">Identity Passport</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-white/10 flex items-center justify-center">
-                <Key size={20} weight="bold" />
+              <div className="h-10 w-10 rounded-2xl bg-zinc-900 dark:bg-zinc-50 border border-zinc-800 dark:border-zinc-200 flex items-center justify-center text-zinc-400 dark:text-zinc-500 group-hover:text-primary transition-colors">
+                <Key size={22} weight="duotone" />
               </div>
             </div>
-            <CardDescription className="text-primary-foreground/60 font-mono text-[10px] break-all mt-4">
+            <CardDescription className="text-zinc-500 dark:text-zinc-400 font-mono text-[11px] break-all mt-4 selection:bg-primary/30">
               {provider?.publicKey?.toString() || "No Subject Identified"}
             </CardDescription>
           </CardHeader>
           <CardContent className="relative z-10 pt-4">
             <div className="space-y-6">
-              <div className="flex gap-2 min-h-8 items-center flex-wrap">
+              <div className="flex gap-2.5 min-h-8 items-center flex-wrap">
                 {provider?.publicKey && (
                   isAdmin ? (
-                    <div className="px-3 py-1.5 bg-white text-primary rounded-lg text-[10px] font-black uppercase tracking-wider">
+                    <div className="px-3.5 py-1.5 bg-white dark:bg-zinc-950 text-zinc-950 dark:text-white rounded-lg text-[10px] font-black uppercase tracking-[0.15em] shadow-[0_0_20px_rgba(255,255,255,0.2)] dark:shadow-xl border border-white/50 dark:border-zinc-800">
                       Super Admin
                     </div>
                   ) : myAssignments.length > 0 ? (
                     myAssignments.map((ma, i) => {
                       const role = roles.find(r => r.publicKey.toString() === ma.account.role.toString());
                       return (
-                        <div key={i} className="px-3 py-1.5 bg-white/20 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                        <div key={i} className="px-3.5 py-1.5 bg-zinc-900/60 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] border border-zinc-700/50 dark:border-zinc-200 backdrop-blur-md shadow-inner">
                           {role?.account.name || "Unknown Role"}
                         </div>
                       );
                     })
                   ) : (
-                    <div className="px-3 py-1.5 bg-white/5 text-white/40 rounded-lg text-[10px] font-bold uppercase tracking-wider italic">
+                    <div className="px-3.5 py-1.5 bg-zinc-900/40 dark:bg-zinc-50 text-zinc-500 dark:text-zinc-400 rounded-lg text-[10px] font-bold uppercase tracking-[0.15em] border border-zinc-800/30 dark:border-zinc-200 italic">
                       Unauthorized
                     </div>
                   )
