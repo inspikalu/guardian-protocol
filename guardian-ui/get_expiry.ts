@@ -1,4 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
+// @ts-nocheck
 import { PublicKey, Connection } from "@solana/web3.js";
 import fs from "fs";
 

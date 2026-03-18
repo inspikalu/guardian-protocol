@@ -1,10 +1,11 @@
 
+// @ts-nocheck
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
 import fs from "fs";
 
 const rbacIdl = JSON.parse(fs.readFileSync("/home/inspiuser/Desktop/bounties/production-systems/guardian-ui/src/lib/anchor/idls/rbac.json", "utf8"));
-const program = new anchor.Program(rbacIdl, { connection: {} } as any);
+const program = new anchor.Program(rbacIdl, { connection: { commitment: "confirmed" } } as any);
 
 const data1 = "zYK/59Phm/aNG830Ztsz9l6aiU7lq5+W0lSzoaB/uQEE0xSBFir/36dlUYVXI/CTLJa53IuOdUeQ6dNqMUIJRZPXDGg0idHVDt2xqW315WALgtztohBPVj4KoPjHw9ByGRXi4uXXxLwZxLdpAAAAAAAAAP8AAAAAAAAAAA==";
 const data2 = "zYK/59Phm/ZjwjLLB5dnWlxQSF+QAZyFRooLI3+CTfsB3EH/MEkP+qdlUYVXI/CTLJa53IuOdUeQ6dNqMUIJRZPXDGg0idHVDt2xqW315WALgtztohBPVj4KoPjHw9ByGRXi4uXXxLyl0rdpAAAAAAEdJLlpAAAAAAAA/Q==";
