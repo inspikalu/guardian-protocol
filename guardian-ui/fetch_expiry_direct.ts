@@ -1,4 +1,5 @@
 
+// @ts-nocheck
 import * as anchor from "@coral-xyz/anchor";
 import { Connection, PublicKey } from "@solana/web3.js";
 import fs from "fs";
@@ -10,7 +11,7 @@ async function main() {
     const connection = new Connection("https://api.devnet.solana.com", "confirmed");
     
     const provider = new anchor.AnchorProvider(connection, {} as any, { commitment: "confirmed" });
-    const program = new anchor.Program(rbacIdl, programId, provider);
+    const program = new anchor.Program(rbacIdl, provider);
     
     const targetUser = new PublicKey("7iR7WEHdZxcRnJyC8hREhJ2Z9hE4prPFZQmLCKrDsbmB");
     const roleName = "ADMIN";
