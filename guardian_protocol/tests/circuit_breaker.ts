@@ -31,8 +31,8 @@ describe("circuit-breaker", () => {
       .rpc();
 
     const circuitAccount = await program.account.circuit.fetch(circuitPda);
-    expect(circuitAccount.name).to.equal(circuitName);
-    expect(circuitAccount.label).to.equal("Test Label");
+    expect(Buffer.from(circuitAccount.name as number[]).toString().replace(/\0/g, '')).to.equal(circuitName);
+    expect(Buffer.from(circuitAccount.label as number[]).toString().replace(/\0/g, '')).to.equal("Test Label");
     expect(circuitAccount.state).to.have.property("closed");
   });
 
@@ -46,7 +46,7 @@ describe("circuit-breaker", () => {
       .rpc();
 
     const circuitAccount = await program.account.circuit.fetch(circuitPda);
-    expect(circuitAccount.label).to.equal("New Label");
+    expect(Buffer.from(circuitAccount.label as number[]).toString().replace(/\0/g, '')).to.equal("New Label");
   });
 
   it("Trips the circuit after threshold failures", async () => {

@@ -22,6 +22,6 @@ pub fn handler(ctx: Context<ForceOpen>) -> Result<()> {
     circuit.consecutive_failures = 0;
     circuit.consecutive_successes = 0;
 
-    msg!("Circuit '{}' force-opened by authority {}", circuit.name, ctx.accounts.authority.key());
+    msg!("Circuit force-opened by authority {}", ctx.accounts.authority.key());
     Ok(())
 }

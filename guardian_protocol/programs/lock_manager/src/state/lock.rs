@@ -19,8 +19,7 @@ pub enum LockState {
 #[derive(InitSpace)]
 pub struct DistributedLock {
     /// Unique identifier for the resource (e.g., "treasury_account")
-    #[max_len(64)]
-    pub resource_id: String,
+    pub resource_id: [u8; 64],
     pub state: LockState,
 
     /// The authority who can force-unlock or administer this lock.

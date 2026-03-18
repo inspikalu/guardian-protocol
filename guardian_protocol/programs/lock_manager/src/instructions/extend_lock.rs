@@ -25,6 +25,6 @@ pub fn handler(ctx: Context<ExtendLock>, additional_seconds: i64) -> Result<()> 
     require!(total_duration <= lock.max_lease_duration, LockError::LeaseTooLong);
 
     lock.expires_at = Some(new_expiry);
-    msg!("Lock '{}' extended to {}", lock.resource_id, new_expiry);
+    msg!("Lock extended to {}", new_expiry);
     Ok(())
 }

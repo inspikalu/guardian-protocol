@@ -56,7 +56,7 @@ describe("rbac", () => {
       .rpc();
 
     const roleAccount = await program.account.role.fetch(rolePda);
-    expect(roleAccount.name).to.equal(roleName);
+    expect(Buffer.from(roleAccount.name as number[]).toString().replace(/\0/g, '')).to.equal(roleName);
   });
 
   it("Grants a role to a user", async () => {

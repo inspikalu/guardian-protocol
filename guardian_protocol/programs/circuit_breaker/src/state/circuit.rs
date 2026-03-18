@@ -18,11 +18,9 @@ pub enum CircuitState {
 #[derive(InitSpace)]
 pub struct Circuit {
     /// Unique name of the resource being protected (e.g., "oracle_program")
-    #[max_len(32)]
-    pub name: String,
+    pub name: [u8; 32],
     /// Human-readable label for the circuit.
-    #[max_len(64)]
-    pub label: String,
+    pub label: [u8; 64],
     pub state: CircuitState,
     /// The authority who can force-open or reset the circuit.
     pub authority: Pubkey,

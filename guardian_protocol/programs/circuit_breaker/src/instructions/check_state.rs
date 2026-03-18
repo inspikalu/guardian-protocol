@@ -21,7 +21,7 @@ pub fn handler(ctx: Context<CheckState>) -> Result<()> {
             circuit.consecutive_failures = 0;
             circuit.consecutive_successes = 0;
             circuit.last_state_change = clock.unix_timestamp;
-            msg!("Circuit '{}' transitioned: Open → HalfOpen (timeout elapsed)", circuit.name);
+            msg!("Circuit transitioned: Open → HalfOpen (timeout elapsed)");
             // In HalfOpen we allow the call through — do NOT error here.
         } else {
             // Still within timeout window — block calls
@@ -30,12 +30,6 @@ pub fn handler(ctx: Context<CheckState>) -> Result<()> {
     }
 
     // Closed or HalfOpen: allow through
-    msg!("Circuit '{}' is {:?} — call permitted", circuit.name,
-        match circuit.state {
-            CircuitState::Closed => "Closed",
-            CircuitState::HalfOpen => "HalfOpen",
-            CircuitState::Open => "Open",
-        }
-    );
+    msg!("Circuit is healthy — call permitted");
     Ok(())
 }

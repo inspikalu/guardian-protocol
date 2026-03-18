@@ -60,7 +60,7 @@ describe("orchestrator", () => {
     const circuitName = "orch-cb-" + Date.now();
     const circuitPda = getPda([Buffer.from("circuit"), Buffer.from(circuitName)], cb.programId);
     await cb.methods
-      .createCircuit(circuitName, 5, 5, new anchor.BN(10))
+      .createCircuit(circuitName, "Orch Label", 5, 5, new anchor.BN(10))
       .accounts({ authority: admin.publicKey })
       .rpc();
 

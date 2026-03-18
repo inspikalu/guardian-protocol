@@ -41,7 +41,7 @@ pub fn handler(ctx: Context<AcquireLock>, lease_duration: i64) -> Result<()> {
         if lock.owner == Some(acquirer_key) {
             require!(lock.allow_reentrancy, LockError::ReentrancyNotAllowed);
             lock.reentrancy_count = lock.reentrancy_count.saturating_add(1);
-            msg!("Lock '{}' re-acquired (depth {})", lock.resource_id, lock.reentrancy_count);
+            msg!("Lock re-acquired (depth {})", lock.reentrancy_count);
             return Ok(());
         }
         // Lock is held by someone else
@@ -58,8 +58,6 @@ pub fn handler(ctx: Context<AcquireLock>, lease_duration: i64) -> Result<()> {
     lock.reentrancy_count = 0;
     lock.total_acquisitions = lock.total_acquisitions.saturating_add(1);
 
-    let resource_id = lock.resource_id.clone();
-
     let receipt = &mut ctx.accounts.receipt;
     receipt.lock = lock_key;
     receipt.owner = acquirer_key;
@@ -68,8 +66,7 @@ pub fn handler(ctx: Context<AcquireLock>, lease_duration: i64) -> Result<()> {
     receipt.bump = ctx.bumps.receipt;
 
     msg!(
-        "Lock '{}' acquired by {} until {}",
-        resource_id,
+        "Lock acquired by {} until {}",
         acquirer_key,
         expires_at
     );

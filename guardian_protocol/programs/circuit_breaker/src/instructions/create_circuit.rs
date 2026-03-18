@@ -33,8 +33,14 @@ pub fn handler(
     let clock = Clock::get()?;
     let circuit = &mut ctx.accounts.circuit;
 
-    circuit.name = name;
-    circuit.label = label;
+    let mut name_arr = [0u8; 32];
+    name_arr[..name.len()].copy_from_slice(name.as_bytes());
+    circuit.name = name_arr;
+
+    let mut label_arr = [0u8; 64];
+    label_arr[..label.len()].copy_from_slice(label.as_bytes());
+    circuit.label = label_arr;
+
     circuit.state = CircuitState::Closed;
     circuit.authority = ctx.accounts.authority.key();
     circuit.failure_threshold = failure_threshold;
@@ -49,6 +55,6 @@ pub fn handler(
     circuit.lifetime_successes = 0;
     circuit.bump = ctx.bumps.circuit;
 
-    msg!("Circuit '{}' created", circuit.name);
+    msg!("Circuit created: {}", name);
     Ok(())
 }

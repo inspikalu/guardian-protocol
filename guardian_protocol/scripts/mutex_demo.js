@@ -36,7 +36,7 @@ async function main() {
     console.log(`Primary Wallet: ${wallet1.publicKey.toString()}`);
     console.log(`Secondary Wallet: ${wallet2.publicKey.toString()}\n`);
 
-    console.log("(Pausing for 3 seconds so you can show the UI ready...)\n");
+    console.log("(Pausing for 3 seconds...)\n");
     await wait(3000);
     
     // Step 1: Wallet 1 acquires the lock

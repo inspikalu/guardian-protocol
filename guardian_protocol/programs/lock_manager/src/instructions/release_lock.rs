@@ -28,7 +28,7 @@ pub fn handler(ctx: Context<ReleaseLock>) -> Result<()> {
     // Handle reentrant release
     if lock.reentrancy_count > 0 {
         lock.reentrancy_count -= 1;
-        msg!("Lock '{}' reentrant release, depth now {}", lock.resource_id, lock.reentrancy_count);
+        msg!("Lock re-acquired (depth {})", lock.reentrancy_count);
         return Ok(());
     }
 
@@ -38,6 +38,6 @@ pub fn handler(ctx: Context<ReleaseLock>) -> Result<()> {
     lock.expires_at = None;
     lock.reentrancy_count = 0;
 
-    msg!("Lock '{}' released", lock.resource_id);
+    msg!("Lock released");
     Ok(())
 }

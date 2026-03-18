@@ -24,7 +24,7 @@ pub fn handler(ctx: Context<RecordFailure>) -> Result<()> {
         circuit.state = CircuitState::Open;
         circuit.consecutive_failures = 0;
         circuit.last_state_change = clock.unix_timestamp;
-        msg!("Circuit '{}' OPENED after {} failures", circuit.name, circuit.failure_threshold);
+        msg!("Circuit OPENED after threshold breach");
     }
 
     Ok(())

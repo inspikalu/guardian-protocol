@@ -23,8 +23,7 @@ pub fn handler(ctx: Context<ForceUnlock>) -> Result<()> {
     lock.reentrancy_count = 0;
 
     msg!(
-        "Lock '{}' force-unlocked by authority {}",
-        lock.resource_id,
+        "Lock force-unlocked by authority {}",
         ctx.accounts.authority.key()
     );
     Ok(())

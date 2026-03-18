@@ -40,14 +40,24 @@ pub fn handler(
     let role = &mut ctx.accounts.role;
     let clock = Clock::get()?;
 
-    role.name = name;
-    role.permissions = permissions;
+    let mut name_arr = [0u8; 32];
+    name_arr[..name.len()].copy_from_slice(name.as_bytes());
+    role.name = name_arr;
+
+    let mut perms_arr = [Permission::None; 10];
+    for (i, p) in permissions.into_iter().enumerate() {
+        if i < 10 {
+            perms_arr[i] = p;
+        }
+    }
+    role.permissions = perms_arr;
+
     role.parent_role = parent_role;
     role.created_by = ctx.accounts.admin.key();
     role.created_at = clock.unix_timestamp;
     role.expires_at = expiry;
     role.bump = ctx.bumps.role;
 
-    msg!("Role '{}' created by {}", role.name, role.created_by);
+    msg!("Role created by {}", role.created_by);
     Ok(())
 }

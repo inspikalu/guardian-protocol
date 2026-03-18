@@ -36,6 +36,9 @@ pub fn handler(
 
     // Check the required permission exists in the role
     let has_permission = ctx.accounts.role.permissions.iter().any(|p| {
+        if matches!(p, Permission::None) {
+            return false;
+        }
         // For TreasuryWithdraw, check the max_amount constraint
         match (&required_permission, p) {
             (

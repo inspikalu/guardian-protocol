@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 /// Permissions that can be assigned to a role.
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq, InitSpace)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace)]
 pub enum Permission {
     /// Allow treasury withdrawal up to a maximum lamport amount.
     TreasuryWithdraw { max_amount: u64 },
@@ -15,4 +15,6 @@ pub enum Permission {
     ViewAudit,
     /// Allow acquiring distributed locks.
     AcquireLock,
+    /// Sentinel for empty permission slots in fixed-size arrays.
+    None,
 }

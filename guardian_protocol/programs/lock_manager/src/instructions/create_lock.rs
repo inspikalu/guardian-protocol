@@ -28,20 +28,23 @@ pub fn handler(
 ) -> Result<()> {
     require!(resource_id.len() <= 64, LockError::ResourceIdTooLong);
 
-    let lock = &mut ctx.accounts.lock;
-    lock.resource_id = resource_id;
-    lock.state = LockState::Available;
-    lock.authority = ctx.accounts.authority.key();
-    lock.owner = None;
-    lock.acquired_at = None;
-    lock.expires_at = None;
-    lock.max_lease_duration = max_lease_duration;
-    lock.allow_reentrancy = allow_reentrancy;
-    lock.reentrancy_count = 0;
-    lock.total_acquisitions = 0;
-    lock.total_contentions = 0;
-    lock.bump = ctx.bumps.lock;
+    let mutable_lock = &mut ctx.accounts.lock;
+    let mut res_arr = [0u8; 64];
+    res_arr[..resource_id.len()].copy_from_slice(resource_id.as_bytes());
+    mutable_lock.resource_id = res_arr;
+    
+    mutable_lock.state = LockState::Available;
+    mutable_lock.authority = ctx.accounts.authority.key();
+    mutable_lock.owner = None;
+    mutable_lock.acquired_at = None;
+    mutable_lock.expires_at = None;
+    mutable_lock.max_lease_duration = max_lease_duration;
+    mutable_lock.allow_reentrancy = allow_reentrancy;
+    mutable_lock.reentrancy_count = 0;
+    mutable_lock.total_acquisitions = 0;
+    mutable_lock.total_contentions = 0;
+    mutable_lock.bump = ctx.bumps.lock;
 
-    msg!("Lock '{}' created", lock.resource_id);
+    msg!("Lock created: {}", resource_id);
     Ok(())
 }

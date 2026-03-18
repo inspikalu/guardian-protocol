@@ -30,7 +30,7 @@ describe("lock-manager", () => {
       .rpc();
 
     const lockAccount = await program.account.distributedLock.fetch(lockPda);
-    expect(lockAccount.resourceId).to.equal(resourceId);
+    expect(Buffer.from(lockAccount.resourceId as number[]).toString().replace(/\0/g, '')).to.equal(resourceId);
   });
 
   it("Acquires a lock", async () => {

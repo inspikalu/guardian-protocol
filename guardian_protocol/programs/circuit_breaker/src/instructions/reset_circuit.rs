@@ -22,6 +22,6 @@ pub fn handler(ctx: Context<ResetCircuit>) -> Result<()> {
     circuit.consecutive_successes = 0;
     circuit.last_state_change = clock.unix_timestamp;
 
-    msg!("Circuit '{}' reset to Closed by authority", circuit.name);
+    msg!("Circuit reset to Closed by authority");
     Ok(())
 }

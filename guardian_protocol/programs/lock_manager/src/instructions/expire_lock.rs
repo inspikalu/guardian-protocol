@@ -30,6 +30,6 @@ pub fn handler(ctx: Context<ExpireLock>) -> Result<()> {
     lock.expires_at = None;
     lock.reentrancy_count = 0;
 
-    msg!("Lock '{}' expired and cleaned up", lock.resource_id);
+    msg!("Lock expired and cleaned up");
     Ok(())
 }

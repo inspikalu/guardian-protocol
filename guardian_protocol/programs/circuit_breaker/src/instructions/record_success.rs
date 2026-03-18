@@ -23,7 +23,7 @@ pub fn handler(ctx: Context<RecordSuccess>) -> Result<()> {
         circuit.state = CircuitState::Closed;
         circuit.consecutive_successes = 0;
         circuit.last_state_change = clock.unix_timestamp;
-        msg!("Circuit '{}' transitioned: HalfOpen → Closed", circuit.name);
+        msg!("Circuit transitioned: HalfOpen → Closed");
     }
 
     Ok(())
