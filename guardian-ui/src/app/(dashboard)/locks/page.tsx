@@ -33,7 +33,7 @@ import {
   BoundingBox
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, decodeString } from "@/lib/utils";
 
 import { useLocks } from "@/hooks/use-locks";
 
@@ -224,7 +224,7 @@ export default function LocksPage() {
                   locks.map((lock) => (
                     <TableRow key={lock.publicKey.toString()} className="group hover:bg-secondary/10 transition-colors">
                       <TableCell className="font-extrabold text-foreground tracking-tight pl-8 whitespace-nowrap">
-                        {lock.account.resourceId}
+                        {decodeString(lock.account.resourceId)}
                       </TableCell>
                       <TableCell>
                         {getLockStateBadge(lock.account.state)}

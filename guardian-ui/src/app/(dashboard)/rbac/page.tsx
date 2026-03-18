@@ -41,7 +41,7 @@ import {
 } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
+import { cn, decodeString } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -333,8 +333,8 @@ export default function RbacPage() {
                     >
                       <option value="">Choose a designation...</option>
                       {roles.map(r => (
-                        <option key={r.publicKey.toString()} value={r.account.name}>
-                          {r.account.name}
+                        <option key={r.publicKey.toString()} value={decodeString(r.account.name)}>
+                          {decodeString(r.account.name)}
                         </option>
                       ))}
                     </select>
@@ -517,7 +517,7 @@ export default function RbacPage() {
                       roles.map((role) => (
                         <TableRow key={role.publicKey.toString()} className="group hover:bg-secondary/10 transition-colors">
                           <TableCell className="font-extrabold text-foreground group-hover:text-primary transition-colors pl-8">
-                            {role.account.name}
+                            {decodeString(role.account.name)}
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1.5 flex-wrap">
@@ -583,7 +583,7 @@ export default function RbacPage() {
                           </TableCell>
                           <TableCell>
                             <div className="px-3 py-1 bg-primary text-primary-foreground rounded-lg text-[10px] font-black uppercase tracking-wider w-fit">
-                              {roles.find(r => r.publicKey.toString() === as.account.role.toString())?.account.name || "Ukn_Role"}
+                              {decodeString(roles.find(r => r.publicKey.toString() === as.account.role.toString())?.account.name || "Ukn_Role")}
                             </div>
                           </TableCell>
                           <TableCell className="font-mono text-[10px] text-muted-foreground italic hidden md:table-cell">

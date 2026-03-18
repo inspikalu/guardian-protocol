@@ -29,7 +29,7 @@ import {
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { useCircuits } from "@/hooks/use-circuits";
-import { cn } from "@/lib/utils";
+import { cn, decodeString } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -55,10 +55,10 @@ export default function CircuitsPage() {
     if (!circuitsProgram) return;
     try {
       setLoading(true);
-      // Filter for the new account size (210 bytes) to avoid deserialization errors from old accounts
+      // Filter for the new account size (178 bytes) to avoid deserialization errors from old accounts
       const allCircuits = await (circuitsProgram as any).account.circuit.all([
         {
-          dataSize: 210, 
+          dataSize: 178, 
         },
       ]);
       setCircuits(allCircuits);
@@ -196,15 +196,17 @@ export default function CircuitsPage() {
                         size="icon" 
                         className="h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={() => {
-                          setEditingLabel({ pubkey: circuit.publicKey.toString(), label: circuit.account.label || circuit.account.name });
-                          setNewLabel(circuit.account.label || circuit.account.name);
+                          const name = decodeString(circuit.account.name);
+                          const label = decodeString(circuit.account.label) || name;
+                          setEditingLabel({ pubkey: circuit.publicKey.toString(), label });
+                          setNewLabel(label);
                         }}
                       >
                         <PencilSimple size={16} weight="bold" className="text-muted-foreground" />
                       </Button>
                     </div>
-                    <CardTitle className="text-2xl font-black italic tracking-tighter uppercase truncate pr-4" title={circuit.account.label || circuit.account.name}>
-                        {circuit.account.label || circuit.account.name}
+                    <CardTitle className="text-2xl font-black italic tracking-tighter uppercase truncate pr-4" title={decodeString(circuit.account.label) || decodeString(circuit.account.name)}>
+                        {decodeString(circuit.account.label) || decodeString(circuit.account.name)}
                     </CardTitle>
                     <CardDescription className="text-[10px] font-mono font-medium opacity-50 truncate max-w-[180px]">
                       {circuit.publicKey.toString()}
