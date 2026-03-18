@@ -52,4 +52,9 @@ pub mod circuit_breaker {
     pub fn reset_circuit(ctx: Context<ResetCircuit>) -> Result<()> {
         instructions::reset_circuit::handler(ctx)
     }
+
+    /// Close a circuit (useful for cleanup or layout migration).
+    pub fn close_circuit(ctx: Context<CloseCircuit>, name: String) -> Result<()> {
+        instructions::close_circuit::handler(ctx, name)
+    }
 }

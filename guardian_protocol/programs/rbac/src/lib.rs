@@ -52,6 +52,20 @@ pub mod rbac {
         instructions::revoke_role::handler(ctx)
     }
 
+    /// Close a named role (useful for cleanup or layout migration).
+    pub fn close_role(ctx: Context<CloseRole>, role_name: String) -> Result<()> {
+        instructions::close_role::handler(ctx, role_name)
+    }
+
+    /// Force close a role assignment (bypass deserialization).
+    pub fn force_close_assignment(
+        ctx: Context<ForceCloseAssignment>,
+        user: Pubkey,
+        role: Pubkey,
+    ) -> Result<()> {
+        instructions::force_close_assignment::handler(ctx, user, role)
+    }
+
     /// Emit an on-chain audit log entry.
     pub fn emit_audit(
         ctx: Context<EmitAudit>,

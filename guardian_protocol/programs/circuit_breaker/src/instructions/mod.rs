@@ -8,6 +8,7 @@ pub mod force_open;
 pub mod reset_circuit;
 
 pub mod update_circuit_label;
+pub mod close_circuit;
 
 pub use create_circuit::*;
 pub use record_success::*;
@@ -16,3 +17,4 @@ pub use check_state::*;
 pub use force_open::*;
 pub use reset_circuit::*;
 pub use update_circuit_label::*;
+pub use close_circuit::*;

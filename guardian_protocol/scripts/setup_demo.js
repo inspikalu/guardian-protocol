@@ -25,13 +25,13 @@ async function main() {
 
     console.log("Current wallet:", provider.wallet.publicKey.toString());
 
-    // 1. Create 'vault-v2' circuit
+    // 1. Create 'vault' circuit
     const [circuitPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("circuit"), Buffer.from("vault-v2")],
+        [Buffer.from("circuit"), Buffer.from("vault")],
         circuitsProgramId
     );
     try {
-        await circuitsProgram.methods.createCircuit("vault-v2", "Vault Sentinel", 5, 3, new anchor.BN(60))
+        await circuitsProgram.methods.createCircuit("vault", "Vault Sentinel", 5, 3, new anchor.BN(60))
             .accounts({
                 authority: provider.wallet.publicKey,
                 circuit: circuitPda,
@@ -43,13 +43,13 @@ async function main() {
         console.log("Circuit 'vault' already exists or failed:", e.message);
     }
 
-    // 2. Create 'vault-v2' lock
+    // 2. Create 'vault' lock
     const [lockPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("lock"), Buffer.from("vault-v2")],
+        [Buffer.from("lock"), Buffer.from("vault")],
         locksProgramId
     );
     try {
-        await locksProgram.methods.createLock("vault-v2", new anchor.BN(3600), true)
+        await locksProgram.methods.createLock("vault", new anchor.BN(3600), true)
             .accounts({
                 authority: provider.wallet.publicKey,
                 lock: lockPda,

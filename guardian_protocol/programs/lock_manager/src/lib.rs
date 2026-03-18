@@ -45,4 +45,9 @@ pub mod lock_manager {
     pub fn expire_lock(ctx: Context<ExpireLock>) -> Result<()> {
         instructions::expire_lock::handler(ctx)
     }
+
+    /// Close a lock (useful for cleanup or layout migration).
+    pub fn close_lock(ctx: Context<CloseLock>, resource_id: String) -> Result<()> {
+        instructions::close_lock::handler(ctx, resource_id)
+    }
 }
