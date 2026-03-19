@@ -22,11 +22,10 @@ export function useCircuits() {
           authority: provider.wallet.publicKey,
           circuit: circuit,
         })
-        .rpc();
-
-      await provider.connection.confirmTransaction(tx, "confirmed");
+        .transaction();
+      const sig = await provider.sendAndConfirm(tx, []);
       toast.success("Circuit force-opened!");
-      return tx;
+      return sig;
     } catch (error: any) {
       console.error("Failed to force open circuit:", error);
       toast.error("Action failed", { description: error.message });
@@ -48,11 +47,10 @@ export function useCircuits() {
           authority: provider.wallet.publicKey,
           circuit: circuit,
         })
-        .rpc();
-
-      await provider.connection.confirmTransaction(tx, "confirmed");
+        .transaction();
+      const sig = await provider.sendAndConfirm(tx, []);
       toast.success("Circuit reset successfully!");
-      return tx;
+      return sig;
     } catch (error: any) {
       console.error("Failed to reset circuit:", error);
       toast.error("Reset failed", { description: error.message });
@@ -74,11 +72,10 @@ export function useCircuits() {
           authority: provider.wallet.publicKey,
           circuit: circuit,
         })
-        .rpc();
-
-      await provider.connection.confirmTransaction(tx, "confirmed");
+        .transaction();
+      const sig = await provider.sendAndConfirm(tx, []);
       toast.success("Circuit label updated!");
-      return tx;
+      return sig;
     } catch (error: any) {
       console.error("Failed to update circuit label:", error);
       toast.error("Update failed", { description: error.message });

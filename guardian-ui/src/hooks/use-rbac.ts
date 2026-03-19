@@ -71,15 +71,13 @@ export function useRbac() {
           role: rolePda,
           systemProgram: anchor.web3.SystemProgram.programId,
         })
-        .rpc();
-
-      // Wait for confirmation
-      await provider.connection.confirmTransaction(tx, "confirmed");
+        .transaction();
+      const sig = await provider.sendAndConfirm(tx, []);
 
       toast.success(`Role "${roleName}" created!`, {
-        description: `TxID: ${tx.slice(0, 8)}...`,
+        description: `TxID: ${sig.slice(0, 8)}...`,
       });
-      return tx;
+      return sig;
     } catch (error: any) {
       console.error("Failed to create role:", error);
       toast.error("Transaction failed", {
@@ -124,11 +122,10 @@ export function useRbac() {
           granterAssignment: null,
           systemProgram: anchor.web3.SystemProgram.programId,
         })
-        .rpc();
-
-      await provider.connection.confirmTransaction(tx, "confirmed");
+        .transaction();
+      const sig = await provider.sendAndConfirm(tx, []);
       toast.success(`Role "${roleName}" assigned to ${userPubkey.slice(0, 8)}...`);
-      return tx;
+      return sig;
     } catch (error: any) {
       console.error("Failed to grant role:", error);
       toast.error("Assignment failed", { description: error.message });
