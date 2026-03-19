@@ -1,7 +1,12 @@
 'use client';
 
 import { useState, useEffect } from "react";
+import { useConnection } from "@solana/wallet-adapter-react";
 import { useAnchorProgram } from "@/hooks/use-anchor-program";
+import { BorshCoder } from "@coral-xyz/anchor";
+import { PublicKey } from "@solana/web3.js";
+import { IDL as CircuitsIdl } from "@/lib/anchor/idls/circuit_breaker";
+import { PROGRAM_IDS } from "@/lib/anchor";
 import { 
   Card, 
   CardContent, 
@@ -42,7 +47,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const circuitsCoder = new BorshCoder(CircuitsIdl as any);
+
 export default function CircuitsPage() {
+  const { connection } = useConnection();
   const { circuitsProgram } = useAnchorProgram();
   const { forceOpen, resetCircuit, updateLabel } = useCircuits();
   const [circuits, setCircuits] = useState<any[]>([]);
@@ -52,16 +60,81 @@ export default function CircuitsPage() {
   const [newLabel, setNewLabel] = useState("");
 
   async function fetchCircuits() {
-    if (!circuitsProgram) return;
+    if (!connection) return;
     try {
       setLoading(true);
-      // Filter for the new account size (178 bytes) to avoid deserialization errors from old accounts
-      const allCircuits = await (circuitsProgram as any).account.circuit.all([
-        {
-          dataSize: 178, 
-        },
-      ]);
-      setCircuits(allCircuits);
+      const rawAccounts = await connection.getProgramAccounts(PROGRAM_IDS.circuits);
+
+      const CIRCUIT_DISC = Buffer.from([113, 209, 5, 225, 233, 216, 248, 61]);
+
+      // Decode a null-terminated fixed-width byte array to UTF-8 string
+      function readFixedString(buf: Buffer, offset: number, len: number): string {
+        const slice = buf.slice(offset, offset + len);
+        const nullIdx = slice.indexOf(0);
+        return slice.slice(0, nullIdx === -1 ? len : nullIdx).toString("utf8");
+      }
+
+      // On-chain layout (matches target/idl/circuit_breaker.json):
+      //  [0..8]   discriminator
+      //  [8..40]  name    [u8; 32]
+      //  [40..104] label   [u8; 64]
+      //  [104]    state   enum u8 (0=Closed, 1=Open, 2=HalfOpen)
+      //  [105..137] authority pubkey [u8; 32]
+      //  [137..141] failure_threshold u32
+      //  [141..145] success_threshold u32
+      //  [145..153] timeout_seconds  i64
+      //  [153..161] total_calls      u64
+      //  [161..165] consecutive_failures u32
+      //  [165..169] consecutive_successes u32
+      //  [169..177] last_failure_time    i64
+      //  [177..185] last_state_change    i64
+      //  [185..193] lifetime_failures    u64
+      //  [193..201] lifetime_successes   u64
+      //  [201]      bump                 u8
+      //  Total = 202 bytes ✓
+      function decodeCircuitAccount(data: Buffer) {
+        if (data.length < 202) return null;
+        if (!data.slice(0, 8).equals(CIRCUIT_DISC)) return null;
+
+        const name   = readFixedString(data, 8, 32);
+        const label  = readFixedString(data, 40, 64);
+        const stateVariant = data.readUInt8(104);
+        const stateKey = ["closed", "open", "halfOpen"][stateVariant] ?? "closed";
+        const authority = data.slice(105, 137);
+        const failureThreshold  = data.readUInt32LE(137);
+        const successThreshold  = data.readUInt32LE(141);
+        const timeoutSeconds    = data.readBigInt64LE(145);
+        const totalCalls        = data.readBigUInt64LE(153);
+        const consecutiveFailures  = data.readUInt32LE(161);
+        const consecutiveSuccesses = data.readUInt32LE(165);
+        const lastFailureTime   = data.readBigInt64LE(169);
+        const lastStateChange   = data.readBigInt64LE(177);
+        const lifetimeFailures  = data.readBigUInt64LE(185);
+        const lifetimeSuccesses = data.readBigUInt64LE(193);
+        const bump = data.readUInt8(201);
+
+        return {
+          name, label,
+          state: { [stateKey]: {} },
+          authority,
+          failureThreshold, successThreshold, timeoutSeconds,
+          totalCalls, consecutiveFailures, consecutiveSuccesses,
+          lastFailureTime, lastStateChange,
+          lifetimeFailures, lifetimeSuccesses, bump,
+        };
+      }
+
+      const allCircuits = rawAccounts
+        .map((a) => {
+          try {
+            const account = decodeCircuitAccount(a.account.data as Buffer);
+            if (!account) return null;
+            return { publicKey: a.pubkey, account };
+          } catch { return null; }
+        })
+        .filter(Boolean);
+
+      setCircuits(allCircuits as any[]);
     } catch (error) {
       console.error("Failed to fetch circuits:", error);
       toast.error("Failed to load circuits from blockchain");
@@ -72,7 +145,7 @@ export default function CircuitsPage() {
 
   useEffect(() => {
     fetchCircuits();
-  }, [circuitsProgram]);
+  }, [connection]);
 
   const handleForceOpen = async (publicKey: string) => {
     try {

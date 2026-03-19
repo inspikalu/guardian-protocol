@@ -7,7 +7,7 @@ import {
   getRbacProgram, 
   getCircuitsProgram, 
   getLocksProgram, 
-  getOrchestratorProgram 
+  getOrchestratorProgram
 } from '@/lib/anchor';
 
 export function useAnchorProgram() {

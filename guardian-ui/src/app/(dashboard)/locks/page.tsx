@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useAnchorProgram } from "@/hooks/use-anchor-program";
+import { useConnection } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
+import * as anchor from "@coral-xyz/anchor";
+import { PROGRAM_IDS } from "@/lib/anchor";
 import { 
   Card, 
   CardContent, 
@@ -44,12 +48,101 @@ export default function LocksPage() {
   const [loading, setLoading] = useState(true);
   const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
 
+  const { connection } = useConnection();
+
+  const decodeLockAccount = (pubkey: PublicKey, data: Buffer) => {
+    if (data.length < 183) return null; // Expected size is 183 bytes
+    
+    // resource_id: 64 bytes at offset 8
+    const resourceIdBuf = data.slice(8, 72);
+    const nullIdx = resourceIdBuf.indexOf(0);
+    const resourceId = resourceIdBuf.slice(0, nullIdx === -1 ? 64 : nullIdx).toString('utf8');
+
+    // state: 1 byte at offset 72
+    const stateVariant = data.readUInt8(72);
+    let state: any = { available: {} };
+    if (stateVariant === 1) state = { locked: {} };
+    else if (stateVariant === 2) state = { expired: {} };
+
+    let offset = 73;
+    
+    // authority: 32 bytes
+    const authority = new PublicKey(data.slice(offset, offset + 32));
+    offset += 32;
+
+    // owner: Option<Pubkey> (33 bytes)
+    let owner = null;
+    if (data.readUInt8(offset) === 1) {
+      owner = new PublicKey(data.slice(offset + 1, offset + 33));
+    }
+    offset += 33;
+
+    // acquired_at: Option<i64> (9 bytes)
+    let acquiredAt = null;
+    if (data.readUInt8(offset) === 1) {
+      acquiredAt = new anchor.BN(data.slice(offset + 1, offset + 9), 'le');
+    }
+    offset += 9;
+
+    // expires_at: Option<i64> (9 bytes)
+    let expiresAt = null;
+    if (data.readUInt8(offset) === 1) {
+      expiresAt = new anchor.BN(data.slice(offset + 1, offset + 9), 'le');
+    }
+    offset += 9;
+
+    // max_lease_duration: i64 (8)
+    const maxLeaseDuration = new anchor.BN(data.slice(offset, offset + 8), 'le');
+    offset += 8;
+
+    // allow_reentrancy: bool (1)
+    const allowReentrancy = data.readUInt8(offset) === 1;
+    offset += 1;
+
+    // reentrancy_count: u8 (1)
+    const reentrancyCount = data.readUInt8(offset);
+    offset += 1;
+
+    // total_acquisitions: u64 (8)
+    const totalAcquisitions = new anchor.BN(data.slice(offset, offset + 8), 'le');
+    offset += 8;
+
+    // total_contentions: u64 (8)
+    const totalContentions = new anchor.BN(data.slice(offset, offset + 8), 'le');
+    offset += 8;
+
+    return {
+      publicKey: pubkey,
+      account: {
+        resourceId,
+        state,
+        authority,
+        owner,
+        acquiredAt,
+        expiresAt,
+        maxLeaseDuration,
+        allowReentrancy,
+        reentrancyCount,
+        totalAcquisitions,
+        totalContentions
+      }
+    };
+  };
+
   async function fetchLocks() {
-    if (!locksProgram) return;
     try {
       setLoading(true);
-      const allLocks = await (locksProgram as any).account.distributedLock.all();
-      setLocks(allLocks);
+      const accounts = await connection.getProgramAccounts(PROGRAM_IDS.locks, {
+        filters: [
+          { dataSize: 183 } // Lock account size
+        ]
+      });
+
+      const parsedLocks = accounts
+        .map(a => decodeLockAccount(a.pubkey, a.account.data as Buffer))
+        .filter(Boolean);
+        
+      setLocks(parsedLocks);
     } catch (error) {
       console.error("Failed to fetch locks:", error);
       toast.error("Failed to load locks from blockchain");
@@ -60,14 +153,11 @@ export default function LocksPage() {
 
   useEffect(() => {
     fetchLocks();
-  }, [locksProgram]);
+  }, [connection]);
 
   // Real-time updates via WebSockets
   useEffect(() => {
-    if (!locksProgram || !locksProgram.provider.connection) return;
-
-    const connection = locksProgram.provider.connection;
-    const programId = locksProgram.programId;
+    const programId = PROGRAM_IDS.locks;
 
     // Listen for any account changes in this program
     const subscriptionId = connection.onProgramAccountChange(
@@ -83,7 +173,7 @@ export default function LocksPage() {
     return () => {
       connection.removeProgramAccountChangeListener(subscriptionId);
     };
-  }, [locksProgram]);
+  }, [connection]);
 
   const handleForceUnlock = async (publicKey: string) => {
     try {
@@ -108,7 +198,7 @@ export default function LocksPage() {
         );
       case "locked":
         return (
-          <div className="flex items-center gap-2 px-3 py-1 bg-primary text-white rounded-lg shadow-sm shadow-primary/20">
+          <div className="flex items-center gap-2 px-3 py-1 bg-primary text-primary-foreground rounded-lg shadow-sm shadow-primary/20">
              <Lock size={10} weight="fill" />
              <span className="text-[10px] font-black uppercase tracking-widest">Occupied</span>
           </div>
