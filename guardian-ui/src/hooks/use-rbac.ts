@@ -121,6 +121,7 @@ export function useRbac() {
           granter: provider.wallet.publicKey,
           role: rolePda,
           assignment: assignmentPda,
+          granterAssignment: null,
           systemProgram: anchor.web3.SystemProgram.programId,
         })
         .rpc();
