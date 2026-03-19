@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { PublicKey } from "@solana/web3.js";
 import { useAnchorProgram } from "@/hooks/use-anchor-program";
+import { useConnection } from "@solana/wallet-adapter-react";
+import * as anchor from "@coral-xyz/anchor";
+import { PROGRAM_IDS } from "@/lib/anchor";
 import {
   Card,
   CardContent,
@@ -66,6 +69,7 @@ const AVAILABLE_PERMISSIONS = [
 
 export default function RbacPage() {
   const { rbacProgram, provider } = useAnchorProgram();
+  const { connection } = useConnection();
   const { createRole, grantRole } = useRbac();
   const [roles, setRoles] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
@@ -104,11 +108,76 @@ export default function RbacPage() {
     if (!rbacProgram) return;
     try {
       setLoading(true);
-      const [allRoles, allAssignments, allLogs] = await Promise.all([
-        (rbacProgram as any).account.role.all(),
+
+      const [allAssignments, allLogs, rawAccounts] = await Promise.all([
         (rbacProgram as any).account.roleAssignment.all(),
         (rbacProgram as any).account.auditLog.all(),
+        connection.getProgramAccounts(PROGRAM_IDS.rbac)
       ]);
+
+      const ROLE_DISC = Buffer.from([46, 219, 197, 24, 233, 249, 253, 154]);
+      
+      const decodeRoleAccount = (pubkey: PublicKey, data: Buffer) => {
+        try {
+          let offset = 8; // skip discriminator
+          
+          // name: String (4-byte length prefix + utf8 data)
+          const nameLen = data.readUInt32LE(offset);
+          offset += 4;
+          const name = data.slice(offset, offset + nameLen).toString('utf8');
+          offset += nameLen;
+
+          // permissions: Vec<Permission>
+          const permissionsLen = data.readUInt32LE(offset);
+          offset += 4;
+          const permissions: any[] = [];
+          for (let i = 0; i < permissionsLen; i++) {
+            const variant = data.readUInt8(offset);
+            offset += 1;
+            if (variant === 0) { // TreasuryWithdraw
+              const maxAmount = new anchor.BN(data.slice(offset, offset + 8), 'le');
+              offset += 8;
+              permissions.push({ treasuryWithdraw: { maxAmount } });
+            } else if (variant === 1) { permissions.push({ treasuryDeposit: {} }); }
+            else if (variant === 2) { permissions.push({ roleManagement: {} }); }
+            else if (variant === 3) { permissions.push({ emergencyStop: {} }); }
+            else if (variant === 4) { permissions.push({ viewAudit: {} }); }
+            else if (variant === 5) { permissions.push({ acquireLock: {} }); }
+          }
+
+          // parent_role: Option<Pubkey>
+          let parentRole = null;
+          if (data.readUInt8(offset) === 1) {
+            parentRole = new PublicKey(data.slice(offset + 1, offset + 33));
+          }
+          offset += 33;
+
+          // created_by: Pubkey
+          const createdBy = new PublicKey(data.slice(offset, offset + 32));
+          offset += 32;
+
+          // created_at: i64
+          const createdAt = new anchor.BN(data.slice(offset, offset + 8), 'le');
+          offset += 8;
+
+          // expires_at: Option<i64>
+          let expiresAt = null;
+          if (data.readUInt8(offset) === 1) {
+            expiresAt = new anchor.BN(data.slice(offset + 1, offset + 9), 'le');
+          }
+          offset += 9;
+
+          return {
+            publicKey: pubkey,
+            account: { name, permissions, parentRole, createdBy, createdAt, expiresAt }
+          };
+        } catch { return null; }
+      };
+
+      const allRoles = rawAccounts
+        .filter(a => (a.account.data as Buffer).slice(0, 8).equals(ROLE_DISC))
+        .map(a => decodeRoleAccount(a.pubkey, a.account.data as Buffer))
+        .filter(Boolean);
 
       // Real admin check
       const [authorityPda] = PublicKey.findProgramAddressSync(
