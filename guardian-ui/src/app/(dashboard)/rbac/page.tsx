@@ -599,7 +599,7 @@ export default function RbacPage() {
                       const role = roles.find(r => r.publicKey.toString() === ma.account.role.toString());
                       return (
                         <div key={i} className="px-3.5 py-1.5 bg-zinc-900/60 dark:bg-zinc-100 text-zinc-100 dark:text-zinc-900 rounded-lg text-[10px] font-black uppercase tracking-[0.15em] border border-zinc-700/50 dark:border-zinc-200 backdrop-blur-md shadow-inner">
-                          {role?.account.name || "Unknown Role"}
+                          {role ? decodeString(role.account.name) : "Unknown Role"}
                         </div>
                       );
                     })
