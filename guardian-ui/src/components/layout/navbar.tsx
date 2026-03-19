@@ -2,14 +2,15 @@
 
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { ModeToggle } from "@/components/mode-toggle";
-import { MagnifyingGlass, Bell, UserCircle, Gear, List, X } from "@phosphor-icons/react";
-import { Input } from "@/components/ui/input";
+import { List, X } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Sidebar } from "./sidebar";
 import { Button } from "@/components/ui/button";
+import { useRpcEndpoint } from "@/components/providers/solana-provider";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { rpcOption, setRpcOption, heliusAvailable } = useRpcEndpoint();
 
   return (
     <div className="flex h-20 items-center px-4 md:px-8 bg-background border-b border-border/50 transition-colors duration-300 relative">
@@ -43,28 +44,36 @@ export function Navbar() {
         </div>
       )}
 
-      <div className="flex-1 flex items-center gap-8">
+      <div className="flex-1 flex items-center">
         <div className="hidden md:block">
           <h2 className="text-xl font-bold text-foreground">Account Overview</h2>
           <p className="text-xs text-muted-foreground font-medium tracking-wide">Guardian Protocol v1.0</p>
         </div>
-        
-        <div className="max-w-md w-full relative group">
-          <MagnifyingGlass className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-          <Input 
-            placeholder="Search protocol data..." 
-            className="pl-10 h-10 bg-secondary/50 border-transparent focus:border-primary/20 rounded-xl transition-all"
-          />
-        </div>
       </div>
 
-      <div className="flex items-center gap-x-6">
+      <div className="flex items-center gap-x-4">
+        <div className="hidden md:flex items-center gap-1 rounded-xl border border-border/60 bg-secondary/30 p-1">
+          <Button
+            size="sm"
+            variant={rpcOption === "devnet" ? "default" : "ghost"}
+            onClick={() => setRpcOption("devnet")}
+            className="h-8 px-3 text-[10px] font-bold uppercase tracking-wide"
+          >
+            Devnet
+          </Button>
+          <Button
+            size="sm"
+            variant={rpcOption === "helius" ? "default" : "ghost"}
+            onClick={() => setRpcOption("helius")}
+            disabled={!heliusAvailable}
+            className="h-8 px-3 text-[10px] font-bold uppercase tracking-wide"
+          >
+            Helius
+          </Button>
+        </div>
+
         <div className="flex items-center gap-2">
-            <button className="p-2 text-muted-foreground hover:text-foreground transition-colors relative">
-               <Bell size={22} weight="bold" />
-               <span className="absolute top-2 right-2 h-2 w-2 bg-rose-500 rounded-full border-2 border-background" />
-            </button>
-            <ModeToggle />
+          <ModeToggle />
         </div>
         
         <div className="h-8 w-px bg-border/50 mx-2" />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { PublicKey } from "@solana/web3.js";
 import { useAnchorProgram } from "@/hooks/use-anchor-program";
 import { useConnection } from "@solana/wallet-adapter-react";
@@ -57,6 +57,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useRbac, PermissionInput } from "@/hooks/use-rbac";
+import { IDL as RbacIdl } from "@/lib/anchor/idls/rbac";
 
 const AVAILABLE_PERMISSIONS = [
   { id: 'TreasuryWithdraw', label: 'Treasury Withdraw' },
@@ -71,6 +72,26 @@ export default function RbacPage() {
   const { rbacProgram, provider } = useAnchorProgram();
   const { connection } = useConnection();
   const { createRole, grantRole } = useRbac();
+  const readOnlyWallet = useMemo(
+    () => ({
+      publicKey: PublicKey.default,
+      signTransaction: async <T,>(tx: T) => tx,
+      signAllTransactions: async <T,>(txs: T[]) => txs,
+    }),
+    []
+  );
+  const readOnlyProvider = useMemo(
+    () =>
+      new anchor.AnchorProvider(connection, readOnlyWallet as any, {
+        commitment: "confirmed",
+      }),
+    [connection, readOnlyWallet]
+  );
+  const readOnlyRbacProgram = useMemo(
+    () => new anchor.Program(RbacIdl as any, readOnlyProvider),
+    [readOnlyProvider]
+  );
+  const activeRbacProgram = rbacProgram ?? readOnlyRbacProgram;
   const [roles, setRoles] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [myAssignments, setMyAssignments] = useState<any[]>([]);
@@ -105,73 +126,179 @@ export default function RbacPage() {
   };
 
   const fetchData = async () => {
-    if (!rbacProgram) return;
     try {
       setLoading(true);
 
       const [allAssignments, allLogs, rawAccounts] = await Promise.all([
-        (rbacProgram as any).account.roleAssignment.all(),
-        (rbacProgram as any).account.auditLog.all(),
-        connection.getProgramAccounts(PROGRAM_IDS.rbac)
+        (activeRbacProgram as any).account.roleAssignment.all(),
+        (activeRbacProgram as any).account.auditLog.all(),
+        connection.getProgramAccounts(PROGRAM_IDS.rbac),
       ]);
 
       const ROLE_DISC = Buffer.from([46, 219, 197, 24, 233, 249, 253, 154]);
-      
-      const decodeRoleAccount = (pubkey: PublicKey, data: Buffer) => {
-        try {
-          let offset = 8; // skip discriminator
-          
-          // name: String (4-byte length prefix + utf8 data)
-          const nameLen = data.readUInt32LE(offset);
-          offset += 4;
-          const name = data.slice(offset, offset + nameLen).toString('utf8');
-          offset += nameLen;
 
-          // permissions: Vec<Permission>
-          const permissionsLen = data.readUInt32LE(offset);
-          offset += 4;
-          const permissions: any[] = [];
-          for (let i = 0; i < permissionsLen; i++) {
-            const variant = data.readUInt8(offset);
-            offset += 1;
-            if (variant === 0) { // TreasuryWithdraw
-              const maxAmount = new anchor.BN(data.slice(offset, offset + 8), 'le');
+      const decodeFixedRoleAccount = (pubkey: PublicKey, data: Buffer) => {
+        let offset = 8; // discriminator
+
+        // name: [u8; 32]
+        const nameBytes = data.slice(offset, offset + 32);
+        offset += 32;
+
+        // permissions: [Permission; 10]
+        const permissions: any[] = [];
+        for (let i = 0; i < 10; i++) {
+          const variant = data.readUInt8(offset);
+          offset += 1;
+          switch (variant) {
+            case 0: { // TreasuryWithdraw { max_amount: u64 }
+              const maxAmount = new anchor.BN(data.slice(offset, offset + 8), "le");
               offset += 8;
               permissions.push({ treasuryWithdraw: { maxAmount } });
-            } else if (variant === 1) { permissions.push({ treasuryDeposit: {} }); }
-            else if (variant === 2) { permissions.push({ roleManagement: {} }); }
-            else if (variant === 3) { permissions.push({ emergencyStop: {} }); }
-            else if (variant === 4) { permissions.push({ viewAudit: {} }); }
-            else if (variant === 5) { permissions.push({ acquireLock: {} }); }
+              break;
+            }
+            case 1:
+              permissions.push({ treasuryDeposit: {} });
+              break;
+            case 2:
+              permissions.push({ roleManagement: {} });
+              break;
+            case 3:
+              permissions.push({ emergencyStop: {} });
+              break;
+            case 4:
+              permissions.push({ viewAudit: {} });
+              break;
+            case 5:
+              permissions.push({ acquireLock: {} });
+              break;
+            case 6: // None sentinel
+              break;
+            default:
+              throw new Error(`Unknown permission variant: ${variant}`);
           }
+        }
 
-          // parent_role: Option<Pubkey>
-          let parentRole = null;
-          if (data.readUInt8(offset) === 1) {
-            parentRole = new PublicKey(data.slice(offset + 1, offset + 33));
-          }
-          offset += 33;
-
-          // created_by: Pubkey
-          const createdBy = new PublicKey(data.slice(offset, offset + 32));
+        // parent_role: Option<Pubkey>
+        let parentRole = null;
+        const hasParentRole = data.readUInt8(offset);
+        offset += 1;
+        if (hasParentRole === 1) {
+          parentRole = new PublicKey(data.slice(offset, offset + 32));
           offset += 32;
+        }
 
-          // created_at: i64
-          const createdAt = new anchor.BN(data.slice(offset, offset + 8), 'le');
-          offset += 8;
+        // created_by: Pubkey
+        const createdBy = new PublicKey(data.slice(offset, offset + 32));
+        offset += 32;
 
-          // expires_at: Option<i64>
-          let expiresAt = null;
-          if (data.readUInt8(offset) === 1) {
-            expiresAt = new anchor.BN(data.slice(offset + 1, offset + 9), 'le');
+        // created_at: i64
+        const createdAt = new anchor.BN(data.slice(offset, offset + 8), "le");
+        offset += 8;
+
+        // expires_at: Option<i64>
+        let expiresAt = null;
+        const hasExpiry = data.readUInt8(offset);
+        offset += 1;
+        if (hasExpiry === 1) {
+          expiresAt = new anchor.BN(data.slice(offset, offset + 8), "le");
+        }
+
+        return {
+          publicKey: pubkey,
+          account: { name: nameBytes, permissions, parentRole, createdBy, createdAt, expiresAt },
+        };
+      };
+
+      const decodeLegacyRoleAccount = (pubkey: PublicKey, data: Buffer) => {
+        let offset = 8; // discriminator
+
+        const nameLen = data.readUInt32LE(offset);
+        offset += 4;
+        const name = data.slice(offset, offset + nameLen).toString("utf8");
+        offset += nameLen;
+
+        const permissionsLen = data.readUInt32LE(offset);
+        offset += 4;
+        const permissions: any[] = [];
+        for (let i = 0; i < permissionsLen; i++) {
+          const variant = data.readUInt8(offset);
+          offset += 1;
+          switch (variant) {
+            case 0: {
+              const maxAmount = new anchor.BN(data.slice(offset, offset + 8), "le");
+              offset += 8;
+              permissions.push({ treasuryWithdraw: { maxAmount } });
+              break;
+            }
+            case 1:
+              permissions.push({ treasuryDeposit: {} });
+              break;
+            case 2:
+              permissions.push({ roleManagement: {} });
+              break;
+            case 3:
+              permissions.push({ emergencyStop: {} });
+              break;
+            case 4:
+              permissions.push({ viewAudit: {} });
+              break;
+            case 5:
+              permissions.push({ acquireLock: {} });
+              break;
+            default:
+              throw new Error(`Unknown legacy permission variant: ${variant}`);
           }
-          offset += 9;
+        }
 
-          return {
-            publicKey: pubkey,
-            account: { name, permissions, parentRole, createdBy, createdAt, expiresAt }
-          };
-        } catch { return null; }
+        let parentRole = null;
+        const hasParentRole = data.readUInt8(offset);
+        offset += 1;
+        if (hasParentRole === 1) {
+          parentRole = new PublicKey(data.slice(offset, offset + 32));
+          offset += 32;
+        }
+
+        const createdBy = new PublicKey(data.slice(offset, offset + 32));
+        offset += 32;
+        const createdAt = new anchor.BN(data.slice(offset, offset + 8), "le");
+        offset += 8;
+
+        let expiresAt = null;
+        const hasExpiry = data.readUInt8(offset);
+        offset += 1;
+        if (hasExpiry === 1) {
+          expiresAt = new anchor.BN(data.slice(offset, offset + 8), "le");
+        }
+
+        return {
+          publicKey: pubkey,
+          account: { name, permissions, parentRole, createdBy, createdAt, expiresAt },
+        };
+      };
+
+      const isReadableRoleName = (name: string) =>
+        !!name && name.length > 1 && /^[\x20-\x7E]+$/.test(name);
+
+      const decodeRoleAccount = (pubkey: PublicKey, data: Buffer) => {
+        let fixed: any = null;
+        let legacy: any = null;
+
+        try {
+          fixed = decodeFixedRoleAccount(pubkey, data);
+        } catch {}
+
+        try {
+          legacy = decodeLegacyRoleAccount(pubkey, data);
+        } catch {}
+
+        const fixedName = fixed ? decodeString(fixed.account.name) : "";
+        const legacyName = legacy ? decodeString(legacy.account.name) : "";
+        const fixedReadable = isReadableRoleName(fixedName);
+        const legacyReadable = isReadableRoleName(legacyName);
+
+        if (legacyReadable && (!fixedReadable || fixedName.length <= 2)) return legacy;
+        if (fixedReadable) return fixed;
+        return legacy ?? fixed ?? null;
       };
 
       const allRoles = rawAccounts
@@ -179,13 +306,17 @@ export default function RbacPage() {
         .map(a => decodeRoleAccount(a.pubkey, a.account.data as Buffer))
         .filter(Boolean);
 
-      // Real admin check
-      const [authorityPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("authority")],
-        rbacProgram.programId
-      );
-      const authority: any = await (rbacProgram as any).account.authority.fetch(authorityPda);
-      setIsAdmin(authority.admin.toString() === provider?.publicKey?.toString());
+      // Real admin check (do not fail full page if this lookup errors)
+      try {
+        const [authorityPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from("authority")],
+          activeRbacProgram.programId
+        );
+        const authority: any = await (activeRbacProgram as any).account.authority.fetch(authorityPda);
+        setIsAdmin(authority.admin.toString() === provider?.publicKey?.toString());
+      } catch {
+        setIsAdmin(false);
+      }
 
       setRoles(allRoles);
       setAssignments(allAssignments.filter((as: any) => !isExpired(as.account.expiresAt)));
@@ -199,7 +330,10 @@ export default function RbacPage() {
   };
 
   const fetchMyAccess = async () => {
-    if (!rbacProgram || !provider?.publicKey) return;
+    if (!rbacProgram || !provider?.publicKey) {
+      setMyAssignments([]);
+      return;
+    }
     try {
       const [authorityPda] = PublicKey.findProgramAddressSync(
         [Buffer.from("authority")],
@@ -229,7 +363,7 @@ export default function RbacPage() {
   useEffect(() => {
     fetchData();
     fetchMyAccess();
-  }, [rbacProgram, provider?.publicKey?.toString()]);
+  }, [connection, rbacProgram, provider?.publicKey?.toString()]);
 
   const handleCreateRole = async () => {
     try {

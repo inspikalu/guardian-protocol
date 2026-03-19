@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useRpcEndpoint } from "@/components/providers/solana-provider";
 import { 
   Shield, 
   Lightning, 
@@ -37,6 +38,7 @@ const routes = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { rpcOption } = useRpcEndpoint();
 
   return (
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border transition-colors duration-300">
@@ -75,7 +77,9 @@ export function Sidebar() {
              <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground mb-3">Network</p>
              <div className="flex items-center gap-2">
                 <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-xs font-bold">Solana Devnet</span>
+                <span className="text-xs font-bold">
+                  {rpcOption === "helius" ? "Helius Devnet" : "Solana Devnet"}
+                </span>
              </div>
           </div>
         </div>
