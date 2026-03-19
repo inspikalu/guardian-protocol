@@ -206,6 +206,7 @@ export default function RbacPage() {
         return {
           publicKey: pubkey,
           account: { name: nameBytes, permissions, parentRole, createdBy, createdAt, expiresAt },
+          isGrantCompatible: true,
         };
       };
 
@@ -273,6 +274,7 @@ export default function RbacPage() {
         return {
           publicKey: pubkey,
           account: { name, permissions, parentRole, createdBy, createdAt, expiresAt },
+          isGrantCompatible: false,
         };
       };
 
@@ -390,6 +392,13 @@ export default function RbacPage() {
   const handleAssignUser = async () => {
     try {
       setIsSubmitting(true);
+      const selectedRole = roles.find(r => decodeString(r.account.name) === assignRoleName);
+      if (selectedRole && selectedRole.isGrantCompatible === false) {
+        toast.error("Selected role is legacy", {
+          description: "This role uses an old account layout and cannot be granted by the current program. Recreate the role first.",
+        });
+        return;
+      }
       const expiryDays = assignUserExpiry ? parseInt(assignUserExpiry) : undefined;
       await grantRole(assignUserPubkey, assignRoleName, expiryDays);
       setIsAssignOpen(false);
@@ -537,7 +546,7 @@ export default function RbacPage() {
                       <option value="">Choose a designation...</option>
                       {roles.map(r => (
                         <option key={r.publicKey.toString()} value={decodeString(r.account.name)}>
-                          {decodeString(r.account.name)}
+                          {decodeString(r.account.name)}{r.isGrantCompatible === false ? " (legacy - recreate)" : ""}
                         </option>
                       ))}
                     </select>
